@@ -97,9 +97,10 @@ export function RegisterForm(){
                 <div>
                     <label className={labelClass}>Categoria de interes:</label>
                     <select className={inputClass} {... register('preferredCategoy')}>
-                        <option value="electronics">Electronica y Gadgets</option>
-                        <option value="computers">Laptops y Computacion</option>
-                        <option value="gaming">Videojuegos y consolas</option>
+                        <option value="electronics">Electronica</option>
+                        <option value="jewelery">Joyeria</option>
+                        <option value="men's clothing">Ropa de Hombre</option>
+                        <option value="women's clothing">Ropa de Mujer</option>
                     </select>
                 </div>
 
