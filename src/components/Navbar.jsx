@@ -33,6 +33,14 @@ export function Navbar({vistaActual, setVistaActual}) {
                     Catalogo
                 </button>
 
+                {/* Muestra BlogList, que ahora obtiene sus datos de Supabase */}
+                <button
+                    className={vistaActual=== 'blog' ? botonBaseClass : botonSecundarioClass}
+                    onClick={() => setVistaActual('blog')}
+                >
+                    Blog
+                </button>
+
                 {!usuario ? (
                     <>
                     <button

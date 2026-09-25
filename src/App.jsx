@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { ProductList } from './components/products/ProductList';
 import { Navbar } from './components/Navbar';
 import { UserProvider } from './context/UserContext';
+// BlogList consume Supabase (vía postService.js) en lugar de la API REST antigua
+import {BlogList} from './components/posts/BlogList'
 
 function App(){
     const [vistaActual, setVistaActual] = useState('catalogo');
@@ -21,6 +23,7 @@ function App(){
             {vistaActual === 'registro' && <RegisterForm/>}
             {vistaActual === 'login' && <LoginForm/>}
             {vistaActual === 'catalogo' && <ProductList/>}
+            {vistaActual === 'blog' && <BlogList/>}
           </main>
         </div>
       </UserProvider>

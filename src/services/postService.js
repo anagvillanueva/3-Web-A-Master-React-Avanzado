@@ -1,51 +1,70 @@
 // ============================================================
-// SERVICIO DE POSTS - capa que conecta React con la API REST
+// SERVICIO DE POSTS - capa que conecta React con Supabase
 // ------------------------------------------------------------
-// Esta capa centraliza todas las llamadas HTTP (fetch) hacia
-// nuestro backend en techstore-backend/server.js. Los componentes
-// (como BlogList.jsx) no llaman a fetch directamente: solo usan
-// estas funciones, sin saber cómo está construida la petición.
-// Esto se conoce como "separación de responsabilidades".
+// Antes esta capa hacía fetch() hacia nuestro backend propio en
+// Express (techstore-backend/server.js). Ahora habla directo con
+// la base de datos Postgres de Supabase usando el SDK cliente
+// (supabaseClient.js), sin pasar por un servidor intermedio.
+//
+// Los componentes (como BlogList.jsx) siguen sin saber cómo se
+// obtienen los datos: solo llaman a estas funciones. Eso sigue
+// siendo "separación de responsabilidades", solo que ahora la
+// implementación interna usa Supabase en vez de fetch a una API REST.
+//
+// Cada método de supabase-js devuelve siempre { data, error }, nunca
+// lanza una excepción por sí solo. Por eso el patrón se repite en
+// las 3 funciones: revisamos "error" a mano y lo convertimos en un
+// throw, para que BlogList.jsx pueda seguir usando try/catch igual
+// que antes.
 // ============================================================
 
-import { typeschemaResolver } from "@hookform/resolvers/typeschema";
-import { ArraySchema } from "yup";
-
-// URL base de nuestra API REST (definida en techstore-backend/server.js)
-const API_URL = 'http://localhost:4000/api/posts';
+import { supabase } from './supabaseClient';
 
 export const postService = {
-    // GET /api/posts -> obtiene todas las publicaciones
+    // Trae todas las filas de la tabla "posts", ordenadas por fecha de
+    // creación descendente (las más nuevas primero). Equivalente al
+    // antiguo GET /api/posts.
     obtenerTodos: async () => {
-        const respuesta = await fetch(API_URL);
-        // respuesta.ok es false si el servidor respondió con un error (4xx o 5xx)
-        if(!respuesta.ok) throw new Error('Error al conectar con el servidor Node.js');
-        return await respuesta.json();
+        const { data, error } = await supabase
+            .from('posts')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw new Error(error.message);
+        return data;
     },
 
-    // POST /api/posts -> crea una nueva publicación
-    // El método por defecto de fetch es GET, por eso hay que
-    // indicar explícitamente 'POST' y enviar el body en JSON.
+    // Inserta una nueva fila en "posts". .select() al final le pide a
+    // Supabase que nos devuelva la fila recién creada (incluyendo el id
+    // y el created_at generados por la base de datos); por eso se
+    // regresa data[0] y no todo el arreglo. Equivalente al antiguo
+    // POST /api/posts.
     crear: async (nuevoPost) => {
-        const respuesta = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json' // le decimos al servidor que el body es JSON
-            },
-            body: JSON.stringify(nuevoPost) // convertimos el objeto JS a texto JSON
-        });
-        if(!respuesta.ok) throw new Error ('Error al guardar en el servidor');
-        return await respuesta.json();
+        const { data, error } = await supabase
+            .from('posts')
+            .insert([
+                {
+                    titulo: nuevoPost.titulo,
+                    contenido: nuevoPost.contenido,
+                    autor: nuevoPost.autor
+                }
+            ])
+            .select();
+
+        if (error) throw new Error(error.message);
+        return data[0];
     },
 
-    // DELETE /api/posts/:id -> elimina una publicación por su id
-    // El id viaja como parte de la URL, tal como lo espera la
-    // ruta app.delete('/api/posts/:id') del backend.
+    // Elimina la fila cuyo id coincide con el recibido (.eq('id', id)
+    // arma el equivalente a un WHERE id = ... en SQL). Equivalente al
+    // antiguo DELETE /api/posts/:id.
     eliminar: async (id) => {
-        const respuesta = await fetch(`${API_URL}/${id}`, {
-            method: 'DELETE'
-        });
-        if(!respuesta.ok) throw new Error('Error al eliminar del servidor');
-        return await respuesta.json();
+        const { error } = await supabase
+            .from('posts')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw new Error(error.message);
+        return true;
     }
 };
