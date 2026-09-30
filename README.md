@@ -50,28 +50,60 @@ El blog (`BlogList.jsx`) ya no consume una API propia en Node/Express: habla dir
 - **`src/services/supabaseClient.js`** crea el cliente de Supabase una sola vez (patrón singleton) a partir de dos variables de entorno.
 - **`src/services/postService.js`** usa ese cliente para leer (`select`), crear (`insert`) y eliminar (`delete`) filas de la tabla `posts`. Es la única capa que sabe que existe Supabase; el componente `BlogList.jsx` solo llama a `postService.obtenerTodos()`, `postService.crear()` y `postService.eliminar()`.
 
-### Variables de entorno
+### Paso a paso para conectar tu propio proyecto a Supabase
 
-Vite solo expone al navegador las variables que empiezan con `VITE_`. Se definen en un archivo `.env.local` en la raíz del proyecto (ignorado por git, ver `.gitignore`):
+1. **Crear cuenta y proyecto en Supabase**
+   - Entra a [supabase.com](https://supabase.com) e inicia sesión (o crea una cuenta gratis).
+   - Click en **New Project**, elige una organización, ponle un nombre, define una contraseña para la base de datos y selecciona una región.
+   - Espera unos minutos a que Supabase termine de aprovisionar el proyecto.
 
-```
-VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
-VITE_SUPABASE_ANON_KEY=tu-clave-anonima-publica
-```
+2. **Crear la tabla `posts`**
+   - En el dashboard del proyecto, ve a **Table Editor** → **New table** (o usa el **SQL Editor**).
+   - Crea la tabla `posts` con estas columnas (`postService.js` asume al menos estas):
 
-Estos valores se obtienen desde el dashboard del proyecto en Supabase (Project Settings → API). La `anon key` es pública por diseño; el acceso a los datos se controla con las políticas de **Row Level Security (RLS)** configuradas en Supabase, no ocultando esta clave.
+     | Columna      | Tipo                     |
+     |--------------|--------------------------|
+     | `id`         | identificador (PK, autoincremental o `uuid`) |
+     | `titulo`     | texto                    |
+     | `contenido`  | texto                    |
+     | `autor`      | texto                    |
+     | `created_at` | timestamp (con default `now()`) |
 
-### Tabla esperada en Supabase
+   - Alternativa rápida por SQL Editor:
+     ```sql
+     create table posts (
+       id bigint generated always as identity primary key,
+       titulo text not null,
+       contenido text not null,
+       autor text,
+       created_at timestamptz default now()
+     );
+     ```
 
-`postService.js` asume una tabla `posts` con al menos estas columnas:
+3. **Configurar Row Level Security (RLS)**
+   - Ve a **Authentication → Policies** (o **Table Editor** → tabla `posts` → **RLS**).
+   - Habilita RLS y crea políticas que permitan `select`, `insert` y `delete` (para este proyecto de práctica, una política abierta basta; en producción conviene restringirla).
 
-| Columna      | Tipo                     |
-|--------------|--------------------------|
-| `id`         | identificador (PK)       |
-| `titulo`     | texto                    |
-| `contenido`  | texto                    |
-| `autor`      | texto                    |
-| `created_at` | timestamp (con default)  |
+4. **Obtener las credenciales del proyecto**
+   - Ve a **Project Settings → API**.
+   - Copia la **Project URL** y la **anon public key** (o `Publishable key` en proyectos nuevos).
+
+5. **Crear el archivo `.env.local`**
+   - En la raíz del proyecto (mismo nivel que `package.json`), crea un archivo `.env.local` (ya está en `.gitignore`, no se sube al repo) con:
+     ```
+     VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
+     VITE_SUPABASE_ANON_KEY=tu-clave-anonima-publica
+     ```
+   - Vite solo expone al navegador las variables que empiezan con `VITE_`.
+
+6. **Instalar dependencias y correr el proyecto**
+   ```bash
+   npm install
+   npm run dev
+   ```
+   Si las variables no están definidas o son incorrectas, `BlogList` fallará al leer/crear/eliminar publicaciones (revisa la consola del navegador para ver el error de conexión).
+
+La `anon key` es pública por diseño; el acceso real a los datos se controla con las políticas de RLS configuradas en Supabase, no ocultando esta clave.
 
 ## Backend heredado (`techstore-backend/`)
 
