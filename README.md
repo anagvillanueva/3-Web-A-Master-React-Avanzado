@@ -115,6 +115,23 @@ npm install
 node server.js
 ```
 
+## Cómo clonar el proyecto
+
+1. **Clonar el repositorio**
+   ```bash
+   git clone https://github.com/anagvillanueva/3-Web-A-Master-React-Avanzado.git
+   ```
+
+2. **Entrar a la carpeta del frontend**
+   ```bash
+   cd 3-Web-A-Master-React-Avanzado/techstore-app
+   ```
+
+3. **Configurar Supabase**
+   - Sigue el [paso a paso de conexión con Supabase](#paso-a-paso-para-conectar-tu-propio-proyecto-a-supabase) de más arriba para crear tu propio archivo `.env.local`, ya que las credenciales no se suben al repositorio (están en `.gitignore`).
+
+4. **Instalar dependencias y correr el proyecto** (ver siguiente sección).
+
 ## Cómo correr el frontend
 
 ```bash
